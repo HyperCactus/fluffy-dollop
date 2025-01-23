@@ -67,8 +67,8 @@ class DocumentRetriever(Retrieve):
 
         # Initialize ChromaDB client
         self.chroma_client = chromadb.PersistentClient(
-            path=chroma_persist_dir,
-            database=db_name or "retrieval_db",
+            path=chroma_persist_dir
+            # database=db_name or "retrieval_db",
         )
         self.collection = self.chroma_client.get_or_create_collection(
             name=collection_name or "documents", 
