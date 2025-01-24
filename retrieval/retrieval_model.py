@@ -253,12 +253,15 @@ class DocumentRetriever(Retrieve):
         self.add_to_collection([name], [description], [doc_metadata]) # Add base page as document
         self.add_pages_recursive(base_url, depth, name=name) # Add chunks from page and subpages
 
-    def search_top_chunks(self, query: Union[str, list[str]], k: int = 5) -> List[Tuple[str, str]]:
+    def search_top_chunks(
+            self, query: Union[str, list[str]], k: int = 5, where: dict = {}
+        ) -> List[Tuple[str, str]]:
         """Search for the top k chunks across all documents."""
+        where["type"] = "chunk"
         results = self.collection.query(
             query_texts=query,
             n_results=k,
-            where={"type": "chunk"},  # Target chunks specifically
+            where=where,
             include=["documents", "metadatas"]
         )
         logger.debug(f"Top chunks results: {results}")

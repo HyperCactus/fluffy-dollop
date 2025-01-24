@@ -4,17 +4,13 @@ from duckduckgo_search import DDGS
 from dotenv import load_dotenv
 import os
 import mlflow
-
-def search_web(query: str):
-    ddgs = DDGS()
-    results = ddgs.text(query, max_results=8)
-    return results
+# TODO: Add ArxivRetriever and WikipediaRetriever from langchain!
 
 class DeepSearch(dspy.Signature):
     """Use avalable information to answer questions relyably.
     """
-    query = dspy.InputField()
-    answer = dspy.OutputField(disc="The final summarized report to the user in markdown format.")
+    question = dspy.InputField()
+    response = dspy.OutputField(disc="The final summarized report to the user in markdown format.")
 
 class RAG(dspy.Module):
     def __init__(self, persist_dir: os.PathLike = "retrieval/chroma_data"):
@@ -22,16 +18,31 @@ class RAG(dspy.Module):
         self.summarizer = dspy.Predict(SummarizeDocument)
         self.rag = dspy.ReAct(
             DeepSearch, 
-            max_iters=4,
+            max_iters=3,
             tools=[
-                search_web,
-                self.retriever.add_from_url,
-                self.retriever
+                self.search_web,
+                self.search_site
                 ]
         )
     
-    def forward(self, query):
-        results = self.rag(query=query)
+    def search_web(self, question: str):
+        """Basic web search to get top pages.
+        """
+        ddgs = DDGS()
+        results = ddgs.text(question, max_results=8)
+        return results
+    
+    def search_site(self, query: str, url: str):
+        """Search the contents of a specific site for relevant context.
+        Args:
+            query (str): The query to search for.
+            url (str): The URL of the site to search.
+        """
+        self.retriever.add_from_url(url)
+        return self.retriever.search_top_chunks(query, where={"source": url})
+
+    def forward(self, question):
+        results = self.rag(question=question)
         return results
 
 if __name__ == "__main__":
@@ -47,6 +58,6 @@ if __name__ == "__main__":
     # print(lm(question))
     rag = RAG()
     response = rag(question)
-    answer = response.answer
+    answer = response.response
     print(f"Question: {question}")
     print(f"Answer:\n{answer}")
