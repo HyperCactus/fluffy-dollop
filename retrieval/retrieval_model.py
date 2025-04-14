@@ -215,7 +215,11 @@ class DocumentRetriever(Retrieve):
         ) -> None:
         """Add a document to the DB consisting of the content of a webpage and its subpages."""
         name = name or base_url.split("/")[-1] or "webpage"
-        text = self._url_to_text(base_url)
+        try:
+            text = self._url_to_text(base_url)
+        except Exception as e:
+            logger.info(f"Failed to fetch URL: {e}")
+            return
         # Add the main page content as chunks
         self.chunk_and_add(text, name)
         # Recursively add subpages
@@ -231,7 +235,7 @@ class DocumentRetriever(Retrieve):
                 subpage_url = urlparse(absolute_url).path.lstrip(urlparse(base_url).path)
                 if urlparse(absolute_url).netloc == urlparse(base_url).netloc \
                     and not subpage_url.startswith(('#', '_')):
-                    print(f'\nLINK: {absolute_url}')
+                    print(f'Adding: {absolute_url}')
                     self.add_pages_recursive(
                         absolute_url, 
                         depth-1, 

@@ -169,6 +169,7 @@ cython_debug/
 
 # PyPI configuration file
 .pypirc
+notes.md
 
-/retrieval/chroma_data/
+/retrieval/chroma_data
 /mlruns/
